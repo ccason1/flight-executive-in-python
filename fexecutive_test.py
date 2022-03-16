@@ -1,4 +1,4 @@
-import fexecutive as fe
+import fexec_classes as fe
 import time
 import math
 import csv
@@ -10,24 +10,24 @@ def setup_telemetry_points():
         
     def get_acc_data():
         #time.sleep(1)
-        return ['acc']
+        return ['col1']
     
-    acc = fe.TelemetryPoint(name='acc', min_time_interval=2, data_getter=get_acc_data, header='acc')
-    telemetry_points.append(acc)
+    p1 = fe.TelemetryPoint(name='p1', min_time_interval=2, data_getter=get_acc_data, header=['p1a'])
+    telemetry_points.append(p1)
     
     def get_tmp_data():
         #time.sleep(1)
-        return ['tmp', 'col2', 'col3']
+        return ['col1', 'col2', 'col3']
     
-    tmp = fe.TelemetryPoint(name='tmp', min_time_interval=5, data_getter=get_tmp_data, header='tmp')
-    telemetry_points.append(tmp)
+    p2 = fe.TelemetryPoint(name='p2', min_time_interval=5, data_getter=get_tmp_data, header=['p2a', 'p2b', 'p2c'])
+    telemetry_points.append(p2)
     
     def get_env_data():
         #time.sleep(3)
-        return ['env', 'col2']
+        return ['col1', 'col2']
     
-    env = fe.TelemetryPoint(name='env', min_time_interval=8, data_getter=get_env_data, header='env')
-    telemetry_points.append(env)
+    p3 = fe.TelemetryPoint(name='p3', min_time_interval=8, data_getter=get_env_data, header=['p3a', 'p3b'])
+    telemetry_points.append(p3)
     
     return telemetry_points
 
@@ -75,25 +75,14 @@ def setup_telemetry_points():
     # rockblock.close_file()
 
 
-def log(telemetry_point):
-    
-    # when enough time has passed, update the message and log
-    if telemetry_point.is_ready_to_update():
-        
-        # call the telemetry point's data getter function to retrieve the latest input data
-        telemetry_point.update()
-        
-        telemetry_point.log_to_csv()
-
-
 # flight loop
 def main_execution_loop(telemetry_points, rockblock):
     
     for point in telemetry_points:
-        log(point)
+        point.log_to_csv()
     
     if rockblock.is_ready_to_send():
-        rockblock_msg = ';'.join([','.join(p.data) for p in telemetry_points])
+        rockblock_msg = ','.join([','.join(p.data) for p in telemetry_points])
         
         rockblock.send(rockblock_msg)
     
@@ -105,18 +94,17 @@ def main():
     
     telemetry_points = setup_telemetry_points()
     
-    # do this on the first boot
-    for pt in telemetry_points:
-        pt.clear_file()
+    # clears each file
+    #for pt in telemetry_points:
+    #    pt.delete_all_file_data()
     
-    rockblock = fe.Rockblock(min_time_interval=4, should_send=False)
+    rockblock = fe.RockblockSender(min_time_interval=4, should_send=False)
     
     # do this on the first boot
     rockblock.reset_msg_count()
     
     while True:
         # execute the flight loop
-        # set send_rockblock_data to False for testing
         main_execution_loop(telemetry_points, rockblock)
     
     for point in telemetry_points:
@@ -124,7 +112,7 @@ def main():
     
     rockblock.close_file()
     
-    run_tests()
+    #run_tests()
 
 
 if __name__ == '__main__':
